@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travel & Expense Dashboard</title>
+<meta name="description" content="Travel & expense 2026 year to date – demo with fake data">
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f4f4f2; --surface-1: #ffffff; --border: #e2e1dc;
+    --text-primary: #141413; --text-secondary: #52514e; --text-muted: #7a7974;
+    --grid: #ecebe7; --accent: #1f3a5f;
+    --agency: #1f3a5f; --expense: #e8833a; --single: #2f6b4f; --single-2: #1f3a5f; --other: #8c96a0; --not-itemised: #cdd5de;
+    --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a; --cat-4: #eda100; --cat-5: #e87ba4; --cat-6: #008300; --cat-7: #6250d6; --cat-8: #e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #121211; --surface-1: #1c1c1b; --border: #34332f;
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #94938b;
+      --grid: #2b2a27; --accent: #8fb3e0;
+      --agency: #6f9bd1; --expense: #ec9050; --single: #5fae86; --single-2: #6f9bd1; --other: #5d6670; --not-itemised: #3e454c;
+      --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500; --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #121211; --surface-1: #1c1c1b; --border: #34332f;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #94938b;
+    --grid: #2b2a27; --accent: #8fb3e0;
+    --agency: #6f9bd1; --expense: #ec9050; --single: #5fae86; --single-2: #6f9bd1; --other: #5d6670; --not-itemised: #3e454c;
+    --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500; --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
+  header h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--text-secondary); }
+  .badge { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border);
+           color: var(--text-secondary); margin-left: 6px; vertical-align: 2px; }
+  nav { display: flex; gap: 4px; margin: 18px 0 12px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+  nav button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; font: inherit;
+               color: var(--text-secondary); cursor: pointer; white-space: nowrap; }
+  nav button[aria-selected="true"] { color: var(--text-primary); border-bottom-color: var(--accent); font-weight: 600; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 16px; }
+  .filters label { display: grid; gap: 2px; font-size: 12px; color: var(--text-muted); }
+  .filters select, .ms > summary, .filters button { font: inherit; font-size: 13px; color: var(--text-primary); background: var(--surface-1);
+           border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; min-height: 32px; }
+  .ms { position: relative; }
+  .ms > summary { list-style: none; cursor: pointer; min-width: 150px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ms > summary::-webkit-details-marker { display: none; }
+  .ms > summary::after { content: " ▾"; color: var(--text-muted); }
+  .ms .menu { position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; background: var(--surface-1); border: 1px solid var(--border);
+              border-radius: 8px; padding: 6px; max-height: 280px; overflow: auto; min-width: 220px; box-shadow: 0 8px 24px rgb(0 0 0 / .12); }
+  .ms .menu label { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--text-primary); padding: 3px 4px; cursor: pointer; }
+  .filters button { cursor: pointer; color: var(--text-secondary); }
+  .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+  .card h2 { font-size: 14px; margin: 0 0 2px; font-weight: 600; }
+  .card .sub { font-size: 12px; color: var(--text-muted); margin: 0 0 8px; }
+  .s3 { grid-column: span 3; } .s4 { grid-column: span 4; } .s5 { grid-column: span 5; } .s6 { grid-column: span 6; }
+  .s7 { grid-column: span 7; } .s12 { grid-column: span 12; }
+  .kpi .label { font-size: 12px; color: var(--text-secondary); }
+  .kpi .value { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .kpi .note { font-size: 12px; color: var(--text-muted); }
+  .chart { position: relative; height: 280px; }
+  .chart.tall { height: 340px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-secondary); margin: 0 0 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .tbl { overflow: auto; max-height: 420px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--grid); text-align: left; white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--surface-1); color: var(--text-secondary); font-weight: 600; font-size: 12px; }
+  td.n, th.n { text-align: right; }
+  .prose { color: var(--text-secondary); }
+  .prose li { margin: 4px 0; }
+  .prose strong { color: var(--text-primary); }
+  .toggle { float: right; font: inherit; font-size: 12px; background: var(--surface-1); color: var(--text-secondary);
+            border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+  [hidden] { display: none !important; }
+  @media (max-width: 860px) { .s3 { grid-column: span 6; } .s4, .s5, .s6, .s7 { grid-column: span 12; } }
+  @media (max-width: 520px) { .s3 { grid-column: span 12; } .kpi .value { font-size: 24px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <button class="toggle" id="theme" type="button" aria-label="Switch light or dark theme">Theme</button>
+    <h1>Travel &amp; Expense – 2026 year to date <span class="badge">Fake data</span></h1>
+    <p>Jan–Oct 2026 · USD · travel agency bookings + approved expense claims · filters apply to every chart</p>
+  </header>
+
+  <nav role="tablist">
+    <button role="tab" aria-selected="true" data-page="exec">Executive summary</button>
+    <button role="tab" aria-selected="false" data-page="teams">Teams &amp; people</button>
+    <button role="tab" aria-selected="false" data-page="checks">Data checks</button>
+  </nav>
+
+  <div class="filters" id="filters">
+    <label>From <select id="from"></select></label>
+    <label>To <select id="to"></select></label>
+  </div>
+
+  <section id="exec" class="grid">
+    <div class="card kpi s3"><div class="label">Total spend</div><div class="value" id="k-total"></div><div class="note" id="k-total-n"></div></div>
+    <div class="card kpi s3"><div class="label">Booked via travel agency</div><div class="value" id="k-agency"></div><div class="note" id="k-agency-n"></div></div>
+    <div class="card kpi s3"><div class="label">Expense claims</div><div class="value" id="k-exp"></div><div class="note" id="k-exp-n"></div></div>
+    <div class="card kpi s3"><div class="label">Average per month</div><div class="value" id="k-avg"></div><div class="note" id="k-avg-n"></div></div>
+
+    <div class="card s7"><h2>Monthly spend</h2><p class="sub">By source</p>
+      <div class="legend"><span><i style="background:var(--agency)"></i>Travel agency</span><span><i style="background:var(--expense)"></i>Expense claims</span></div>
+      <div class="chart"><canvas id="c-month" aria-label="Monthly spend by source"></canvas></div></div>
+    <div class="card s5"><h2>Spend by category</h2><p class="sub">Top 8 categories, the rest as Other</p>
+      <div class="legend" id="l-cat"></div><div class="chart"><canvas id="c-cat" aria-label="Spend by category"></canvas></div></div>
+
+    <div class="card s6"><h2>Spend by team</h2><p class="sub">Client teams; No team = support functions, Unmapped = not in the staff mapping</p>
+      <div class="tbl"><table id="t-team"></table></div></div>
+    <div class="card s6"><h2>Spend by department</h2><p class="sub">Top 10 departments, the rest as Other</p>
+      <div class="chart"><canvas id="c-dept" aria-label="Spend by department"></canvas></div></div>
+
+    <div class="card s6"><h2>Travel channel</h2><p class="sub">Air, hotel and rail: booked through the agency or expensed by employees</p>
+      <div class="legend"><span><i style="background:var(--agency)"></i>Booked via travel agency</span><span><i style="background:var(--expense)"></i>Expensed by employees</span></div>
+      <div class="chart"><canvas id="c-channel" aria-label="Travel channel"></canvas></div></div>
+    <div class="card s6"><h2>Purpose of trip</h2><p class="sub">Travel agency bookings</p>
+      <div class="chart"><canvas id="c-purpose" aria-label="Purpose of trip"></canvas></div></div>
+
+    <div class="card s12"><h2>Top 50 employees</h2><p class="sub">Ranked by total spend in the filtered period</p>
+      <div class="tbl"><table id="t-top"></table></div></div>
+  </section>
+
+  <section id="teams" class="grid" hidden>
+    <div class="card s6"><h2>Spend by team</h2><p class="sub">Client teams only</p>
+      <div class="legend"><span><i style="background:var(--agency)"></i>Travel agency</span><span><i style="background:var(--expense)"></i>Expense claims</span></div>
+      <div class="chart tall"><canvas id="c-team" aria-label="Spend by team"></canvas></div></div>
+    <div class="card s6"><h2>Spend by department</h2><p class="sub">Cost center group and department</p>
+      <div class="tbl"><table id="t-dept"></table></div></div>
+    <div class="card s12"><h2>Spend by country</h2><p class="sub">Travel agency = destination country; expense claims = employee's country</p>
+      <div class="legend"><span><i style="background:var(--agency)"></i>Travel agency</span><span><i style="background:var(--expense)"></i>Expense claims</span></div>
+      <div class="chart"><canvas id="c-country" aria-label="Spend by country"></canvas></div></div>
+  </section>
+
+  <section id="checks" class="grid" hidden>
+    <div class="card s12 prose">
+      <h2>How the numbers are built</h2>
+      <ul>
+        <li><strong>Travel agency</strong> – newest <em>Travel agency bookings</em> file, visible Air / Hotel / Rail tabs (hidden tabs are old copies). Dated by invoice date; country = destination.
+          <ul><li><strong>Duplicates removed</strong> – the September extract repeats hotel stays under the hotel group name and the brand name, and repeats some air rows.</li>
+              <li><strong>Currency corrected</strong> – Tokyo hotel stays one October week were in yen in the USD column; converted at 1/150 USD per yen.</li></ul></li>
+        <li><strong>Expense claims</strong> – approved reports, dated by report date; amount = report total in USD, so it ties to the expense system. The export holds one expense line per report: the line keeps its expense type, the rest of the report is <em>Not itemised in export</em>.</li>
+        <li><strong>Period</strong> – calendar 2026 only (Jan–Oct). Rows dated before 2026 are left out and shown in the tie-out.</li>
+        <li><strong>People</strong> – department from the cost center the expense was charged to; travellers borrow the cost center of their own expense claims. Team from the staff mapping by employee ID, else by name.</li>
+      </ul>
+    </div>
+    <div class="card s6"><h2>Load checks</h2><p class="sub">Tie-out of the last build (not filtered)</p><div class="tbl"><table id="t-checks"></table></div></div>
+    <div class="card s6"><h2>How each amount was derived</h2><p class="sub">line_basis</p>
+      <div class="legend"><span><i style="background:var(--agency)"></i>Travel agency</span><span><i style="background:var(--expense)"></i>Expense claims</span></div>
+      <div class="chart"><canvas id="c-basis" aria-label="Spend by basis"></canvas></div></div>
+    <div class="card s12"><h2>Travel agency adjustments</h2><p class="sub">Rows converted or removed by the build (not filtered)</p><div class="tbl"><table id="t-adj"></table></div></div>
+    <div class="card s12"><h2>People missing from the staff mapping</h2><p class="sub">No department or team – refresh the mapping</p><div class="tbl"><table id="t-gaps"></table></div></div>
+  </section>
+</div>
+
+<script src="data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(() => {
+  const D = window.TE_DATA, C = D.columns, ix = Object.fromEntries(C.map((c, i) => [c, i]));
+  const val = (r, c) => { const v = r[ix[c]]; return c === "amount" ? v : (v == null ? null : D.dict[c][v]); };
+  const rows = D.rows.map(r => Object.fromEntries(C.map(c => [c, val(r, c)])));
+  const months = [...new Set(rows.map(r => r.month))].sort();
+  const fmt = v => (v < 0 ? "−" : "") + "$" + Math.abs(v).toLocaleString("en-US", { maximumFractionDigits: 0 });
+  const short = v => Math.abs(v) >= 1e6 ? "$" + (v / 1e6).toFixed(2) + "M" : Math.abs(v) >= 1e3 ? "$" + (v / 1e3).toFixed(0) + "k" : fmt(v);
+  const monthName = m => new Date(m + "-01T00:00:00").toLocaleString("en-US", { month: "short", year: "2-digit" });
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const AG = "Travel agency", EX = "Expense claims";
+
+  // ---- filters ---------------------------------------------------------------------------------
+  const from = document.getElementById("from"), to = document.getElementById("to");
+  months.forEach(m => { from.add(new Option(monthName(m), m)); to.add(new Option(monthName(m), m)); });
+  to.value = months[months.length - 1];
+  const DIMS = [["source", "Source"], ["category_group", "Category group"], ["department", "Department"], ["team", "Team"], ["country", "Country"]];
+  const picked = {};
+  const fbox = document.getElementById("filters");
+  DIMS.forEach(([key, label]) => {
+    const vals = [...new Set(rows.map(r => r[key]).filter(v => v != null))].sort();
+    picked[key] = new Set();
+    const wrap = document.createElement("label"); wrap.textContent = label;
+    const det = document.createElement("details"); det.className = "ms";
+    const sum = document.createElement("summary"); sum.textContent = "All";
+    const menu = document.createElement("div"); menu.className = "menu";
+    vals.forEach(v => {
+      const l = document.createElement("label"), cb = document.createElement("input");
+      cb.type = "checkbox"; cb.value = v;
+      cb.onchange = () => { cb.checked ? picked[key].add(v) : picked[key].delete(v);
+        sum.textContent = picked[key].size ? [...picked[key]].join(", ") : "All"; render(); };
+      l.append(cb, " " + v); menu.append(l);
+    });
+    det.append(sum, menu); wrap.append(det); fbox.append(wrap);
+  });
+  const reset = document.createElement("button"); reset.type = "button"; reset.textContent = "Reset filters";
+  reset.onclick = () => { from.value = months[0]; to.value = months[months.length - 1];
+    fbox.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
+    fbox.querySelectorAll(".ms summary").forEach(s => s.textContent = "All");
+    Object.values(picked).forEach(s => s.clear()); render(); };
+  fbox.append(reset);
+  document.addEventListener("click", e => fbox.querySelectorAll("details.ms[open]").forEach(d => { if (!d.contains(e.target)) d.open = false; }));
+  from.onchange = to.onchange = () => { if (from.value > to.value) [from.value, to.value] = [to.value, from.value]; render(); };
+
+  const filtered = () => rows.filter(r => r.month >= from.value && r.month <= to.value &&
+    DIMS.every(([k]) => !picked[k].size || picked[k].has(r[k])));
+
+  // ---- helpers ---------------------------------------------------------------------------------
+  const group = (rs, key, f = r => r.amount) => { const m = new Map(); rs.forEach(r => m.set(key(r), (m.get(key(r)) || 0) + f(r))); return m; };
+  const top = (m, n, other = "Other") => { const s = [...m].sort((a, b) => b[1] - a[1]); if (s.length <= n) return s;
+    return [...s.slice(0, n), [other, s.slice(n).reduce((t, x) => t + x[1], 0)]]; };
+  const charts = {};
+  const base = () => ({
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: { legend: { display: false },
+      tooltip: { backgroundColor: css("--surface-1"), titleColor: css("--text-primary"), bodyColor: css("--text-secondary"),
+        borderColor: css("--border"), borderWidth: 1, padding: 10, boxPadding: 4,
+        callbacks: { label: c => ` ${c.dataset.label || c.label}: ${fmt(c.parsed.y ?? c.parsed.x ?? c.parsed)}` } } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: css("--text-muted") }, border: { color: css("--border") } },
+      y: { grid: { color: css("--grid") }, border: { display: false }, ticks: { color: css("--text-muted"), callback: v => short(v) } } },
+  });
+  const draw = (id, type, data, opts = {}) => {
+    charts[id]?.destroy();
+    charts[id] = new Chart(document.getElementById(id), { type, data, options: Object.assign(base(), opts) });
+  };
+  const bar = (label, data, color, extra = {}) => ({ label, data, backgroundColor: color, borderColor: css("--surface-1"),
+    borderWidth: 1, borderRadius: 4, borderSkipped: "start", maxBarThickness: 36, ...extra });
+  const stacked = (labels, rs, key, horizontal = false) => {
+    const by = s => labels.map(l => rs.filter(r => r.source === s && key(r) === l).reduce((t, r) => t + r.amount, 0));
+    const o = base();
+    o.indexAxis = horizontal ? "y" : "x";
+    o.scales.x.stacked = o.scales.y.stacked = true;
+    if (horizontal) { [o.scales.x, o.scales.y] = [o.scales.y, o.scales.x]; o.scales.x.stacked = o.scales.y.stacked = true;
+      o.plugins.tooltip.callbacks.label = c => ` ${c.dataset.label}: ${fmt(c.parsed.x)}`; }
+    return [{ labels, datasets: [bar(AG, by(AG), css("--agency")), bar(EX, by(EX), css("--expense"))] }, o];
+  };
+  const pie = (id, entries, colors) => {
+    const total = entries.reduce((t, e) => t + e[1], 0);
+    charts[id]?.destroy();
+    charts[id] = new Chart(document.getElementById(id), { type: "doughnut",
+      data: { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: colors,
+        borderColor: css("--surface-1"), borderWidth: 2 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: false, cutout: "55%",
+        plugins: { legend: { display: false }, tooltip: { ...base().plugins.tooltip,
+          callbacks: { label: c => ` ${c.label}: ${fmt(c.parsed)} (${(100 * c.parsed / total).toFixed(1)}%)` } } } } });
+  };
+  const table = (id, head, body, numeric) => {
+    const t = document.getElementById(id);
+    t.innerHTML = "<thead><tr>" + head.map((h, i) => `<th class="${numeric[i] ? "n" : ""}">${h}</th>`).join("") + "</tr></thead><tbody>" +
+      body.map(r => "<tr>" + r.map((v, i) => `<td class="${numeric[i] ? "n" : ""}">${numeric[i] && typeof v === "number" ? fmt(v) : (v ?? "")}</td>`).join("") + "</tr>").join("") +
+      "</tbody>";
+  };
+  const sumIf = (rs, f) => rs.reduce((t, r) => t + (f(r) ? r.amount : 0), 0);
+
+  // ---- render ----------------------------------------------------------------------------------
+  function render() {
+    const rs = filtered();
+    const total = sumIf(rs, () => true), ag = sumIf(rs, r => r.source === AG), ex = sumIf(rs, r => r.source === EX);
+    const ms = months.filter(m => m >= from.value && m <= to.value);
+    const people = new Set(rs.map(r => r.employee)).size;
+    document.getElementById("k-total").textContent = short(total);
+    document.getElementById("k-total-n").textContent = `${people} people · ${rs.length.toLocaleString()} lines`;
+    document.getElementById("k-agency").textContent = short(ag);
+    document.getElementById("k-agency-n").textContent = total ? `${(100 * ag / total).toFixed(0)}% of spend` : "";
+    document.getElementById("k-exp").textContent = short(ex);
+    document.getElementById("k-exp-n").textContent = total ? `${(100 * ex / total).toFixed(0)}% of spend` : "";
+    document.getElementById("k-avg").textContent = short(ms.length ? total / ms.length : 0);
+    document.getElementById("k-avg-n").textContent = `${ms.length} month${ms.length === 1 ? "" : "s"}`;
+
+    let [d, o] = stacked(ms, rs, r => r.month);
+    d.labels = ms.map(monthName); draw("c-month", "bar", d, o);
+
+    const cats = top(group(rs, r => r.category), 8);
+    const palette = ["--cat-1", "--cat-2", "--cat-3", "--cat-4", "--cat-5", "--cat-6", "--cat-7", "--cat-8"].map(css);
+    let k = 0; const catColors = cats.map(([c]) => c === "Other" ? css("--other") : c === "Not itemised in export" ? css("--not-itemised") : palette[k++]);
+    pie("c-cat", cats, catColors);
+    document.getElementById("l-cat").innerHTML = cats.map(([c], i) => `<span><i style="background:${catColors[i]}"></i>${c}</span>`).join("");
+
+    const teams = [...group(rs, r => r.team)].sort((a, b) => b[1] - a[1]);
+    table("t-team", ["Team", "People", "Travel agency", "Expense claims", "Total"], teams.map(([t]) => {
+      const tr = rs.filter(r => r.team === t);
+      return [t, new Set(tr.map(r => r.employee)).size, sumIf(tr, r => r.source === AG), sumIf(tr, r => r.source === EX), sumIf(tr, () => true)];
+    }), [0, 0, 1, 1, 1]);
+
+    const depts = top(group(rs, r => r.department), 10);
+    const od = base(); od.interaction = { mode: "nearest", intersect: true };
+    draw("c-dept", "bar", { labels: depts.map(x => x[0]), datasets: [bar("Spend", depts.map(x => x[1]), css("--single-2"))] }, od);
+
+    const travel = rs.filter(r => ["Air", "Hotel", "Rail"].includes(r.category));
+    pie("c-channel", [["Booked via travel agency", sumIf(travel, r => r.source === AG)], ["Expensed by employees", sumIf(travel, r => r.source === EX)]],
+        [css("--agency"), css("--expense")]);
+
+    const purp = [...group(rs.filter(r => r.source === AG), r => r.purpose)].sort((a, b) => b[1] - a[1]);
+    const op = base(); op.interaction = { mode: "nearest", intersect: true };
+    draw("c-purpose", "bar", { labels: purp.map(x => x[0]), datasets: [bar("Spend", purp.map(x => x[1]), css("--single"))] }, op);
+
+    const emp = [...group(rs, r => r.employee)].sort((a, b) => b[1] - a[1]).slice(0, 50);
+    table("t-top", ["#", "Employee", "Department", "Team", "Travel agency", "Expense claims", "Total"], emp.map(([e], i) => {
+      const er = rs.filter(r => r.employee === e);
+      const dep = [...group(er, r => r.department)].sort((a, b) => b[1] - a[1])[0]?.[0];
+      const tm = [...group(er, r => r.team)].sort((a, b) => b[1] - a[1])[0]?.[0];
+      return [i + 1, e, dep, tm, sumIf(er, r => r.source === AG), sumIf(er, r => r.source === EX), sumIf(er, () => true)];
+    }), [0, 0, 0, 0, 1, 1, 1]);
+
+    // Teams & people
+    const clientTeams = teams.map(x => x[0]).filter(t => !["No team", "Unmapped"].includes(t));
+    [d, o] = stacked(clientTeams, rs, r => r.team, true); draw("c-team", "bar", d, o);
+    const dk = [...group(rs, r => r.cc_group_2 + "\u0000" + r.department)].sort((a, b) => b[1] - a[1]);
+    table("t-dept", ["Function", "Department", "People", "Travel agency", "Expense claims", "Total"], dk.map(([key]) => {
+      const [g, dep] = key.split("\u0000"); const dr = rs.filter(r => r.cc_group_2 === g && r.department === dep);
+      return [g, dep, new Set(dr.map(r => r.employee)).size, sumIf(dr, r => r.source === AG), sumIf(dr, r => r.source === EX), sumIf(dr, () => true)];
+    }), [0, 0, 0, 1, 1, 1]);
+    const countries = [...group(rs, r => r.country)].sort((a, b) => b[1] - a[1]).map(x => x[0]);
+    [d, o] = stacked(countries, rs, r => r.country); draw("c-country", "bar", d, o);
+
+    // Data checks
+    const bases = [...group(rs, r => r.line_basis)].sort((a, b) => b[1] - a[1]).map(x => x[0]);
+    [d, o] = stacked(bases, rs, r => r.line_basis, true); draw("c-basis", "bar", d, o);
+    const gaps = [...group(rs.filter(r => r.department === "Unmapped" || r.team === "Unmapped"), r => r.employee)].sort((a, b) => b[1] - a[1]);
+    table("t-gaps", ["Employee", "Sources", "Lines", "USD"], gaps.map(([e, v]) => {
+      const er = rs.filter(r => r.employee === e);
+      return [e, [...new Set(er.map(r => r.source))].sort().join(" + "), er.length, v];
+    }), [0, 0, 0, 1]);
+  }
+
+  table("t-checks", ["Check", "USD"], D.checks, [0, 1]);
+  table("t-adj", ["Category", "Action", "Traveler", "Invoice date", "Hotel / carrier", "Country", "In file (USD col)", "Corrected", "Kept"],
+        D.adjustments, [0, 0, 0, 0, 0, 0, 1, 1, 1]);
+
+  // ---- tabs + theme ----------------------------------------------------------------------------
+  const show = page => {
+    document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x.dataset.page === page));
+    ["exec", "teams", "checks"].forEach(p => document.getElementById(p).hidden = p !== page);
+    render();
+  };
+  document.querySelectorAll("nav button").forEach(b => b.onclick = () => { history.replaceState(null, "", "#" + b.dataset.page); show(b.dataset.page); });
+  const start = location.hash.slice(1);
+  if (["teams", "checks"].includes(start)) document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x.dataset.page === start)), ["exec", "teams", "checks"].forEach(p => document.getElementById(p).hidden = p !== start);
+  document.getElementById("theme").onclick = () => {
+    const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark"
+      : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = dark ? "light" : "dark";
+    render();
+  };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  render();
+})();
+</script>
+</body>
+</html>

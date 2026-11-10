@@ -1,0 +1,2797 @@
+{
+   "datasets" : [
+      {
+         "displayName" : "Spend (Travel agency + Expense claims)",
+         "name" : "spend",
+         "queryLines" : [
+            "SELECT source, category_group, category, detail, employee_name, country, entity, spend_date, month,\n",
+            "  date_format(month, 'yyyy-MM') AS month_label, amount_usd,\n",
+            "  CASE WHEN source = 'Expense claims' THEN amount_usd END AS expense_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN amount_usd END AS agency_usd,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN amount_usd END AS not_itemised_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') THEN amount_usd END AS travel_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') AND source = 'Travel agency' THEN amount_usd END AS agency_travel_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN 'Booked via travel agency' ELSE 'Expensed by employees' END AS channel,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN 'Not itemised (expense claims)' ELSE category_group END AS spend_group,\n",
+            "  CASE\n",
+            "    WHEN source <> 'Travel agency' THEN NULL\n",
+            "    WHEN purpose_of_trip IS NULL THEN 'Not given'\n",
+            "    WHEN purpose_of_trip IN ('Client Meeting', 'Client Work', 'Site Visit') THEN 'Client'\n    WHEN purpose_of_trip = 'Internal Meeting' THEN 'Internal'\n    WHEN purpose_of_trip = 'Conference' THEN 'Conferences & events'\n    WHEN purpose_of_trip = 'New Business' THEN 'New business'\n    WHEN purpose_of_trip = 'Training' THEN 'Training'\n    ELSE 'Other'\n",
+            "  END AS trip_purpose,\n",
+            "  purpose_of_trip, payment_method, report_id, line_basis, department,\n",
+            "  cc_group_2 AS cc_group_2,\n",
+            "  cc_group_3 AS department_group,\n",
+            "  CASE WHEN cc_group_3 IN (SELECT d FROM (SELECT cc_group_3 AS d, SUM(amount_usd) AS s FROM {{schema}}.spend_unified GROUP BY 1 ORDER BY s DESC LIMIT 10)) THEN cc_group_3 ELSE 'Other' END AS department_chart,\n",
+            "  team, match_method\n",
+            "FROM {{schema}}.spend_unified\n"
+         ]
+      },
+      {
+         "displayName" : "Travel (air, hotel, rail)",
+         "name" : "travel",
+         "queryLines" : [
+            "SELECT * FROM (SELECT source, category_group, category, detail, employee_name, country, entity, spend_date, month,\n",
+            "  date_format(month, 'yyyy-MM') AS month_label, amount_usd,\n",
+            "  CASE WHEN source = 'Expense claims' THEN amount_usd END AS expense_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN amount_usd END AS agency_usd,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN amount_usd END AS not_itemised_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') THEN amount_usd END AS travel_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') AND source = 'Travel agency' THEN amount_usd END AS agency_travel_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN 'Booked via travel agency' ELSE 'Expensed by employees' END AS channel,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN 'Not itemised (expense claims)' ELSE category_group END AS spend_group,\n",
+            "  CASE\n",
+            "    WHEN source <> 'Travel agency' THEN NULL\n",
+            "    WHEN purpose_of_trip IS NULL THEN 'Not given'\n",
+            "    WHEN purpose_of_trip IN ('Client Meeting', 'Client Work', 'Site Visit') THEN 'Client'\n    WHEN purpose_of_trip = 'Internal Meeting' THEN 'Internal'\n    WHEN purpose_of_trip = 'Conference' THEN 'Conferences & events'\n    WHEN purpose_of_trip = 'New Business' THEN 'New business'\n    WHEN purpose_of_trip = 'Training' THEN 'Training'\n    ELSE 'Other'\n",
+            "  END AS trip_purpose,\n",
+            "  purpose_of_trip, payment_method, report_id, line_basis, department,\n",
+            "  cc_group_2 AS cc_group_2,\n",
+            "  cc_group_3 AS department_group,\n",
+            "  team, match_method\n",
+            "FROM {{schema}}.spend_unified) WHERE category IN ('Air', 'Hotel', 'Rail')\n"
+         ]
+      },
+      {
+         "displayName" : "Travel agency trips",
+         "name" : "purpose",
+         "queryLines" : [
+            "SELECT * FROM (SELECT source, category_group, category, detail, employee_name, country, entity, spend_date, month,\n",
+            "  date_format(month, 'yyyy-MM') AS month_label, amount_usd,\n",
+            "  CASE WHEN source = 'Expense claims' THEN amount_usd END AS expense_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN amount_usd END AS agency_usd,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN amount_usd END AS not_itemised_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') THEN amount_usd END AS travel_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') AND source = 'Travel agency' THEN amount_usd END AS agency_travel_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN 'Booked via travel agency' ELSE 'Expensed by employees' END AS channel,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN 'Not itemised (expense claims)' ELSE category_group END AS spend_group,\n",
+            "  CASE\n",
+            "    WHEN source <> 'Travel agency' THEN NULL\n",
+            "    WHEN purpose_of_trip IS NULL THEN 'Not given'\n",
+            "    WHEN purpose_of_trip IN ('Client Meeting', 'Client Work', 'Site Visit') THEN 'Client'\n    WHEN purpose_of_trip = 'Internal Meeting' THEN 'Internal'\n    WHEN purpose_of_trip = 'Conference' THEN 'Conferences & events'\n    WHEN purpose_of_trip = 'New Business' THEN 'New business'\n    WHEN purpose_of_trip = 'Training' THEN 'Training'\n    ELSE 'Other'\n",
+            "  END AS trip_purpose,\n",
+            "  purpose_of_trip, payment_method, report_id, line_basis, department,\n",
+            "  cc_group_2 AS cc_group_2,\n",
+            "  cc_group_3 AS department_group,\n",
+            "  team, match_method\n",
+            "FROM {{schema}}.spend_unified) WHERE source = 'Travel agency'\n"
+         ]
+      },
+      {
+         "displayName" : "Team spend",
+         "name" : "teams",
+         "queryLines" : [
+            "SELECT * FROM (SELECT source, category_group, category, detail, employee_name, country, entity, spend_date, month,\n",
+            "  date_format(month, 'yyyy-MM') AS month_label, amount_usd,\n",
+            "  CASE WHEN source = 'Expense claims' THEN amount_usd END AS expense_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN amount_usd END AS agency_usd,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN amount_usd END AS not_itemised_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') THEN amount_usd END AS travel_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') AND source = 'Travel agency' THEN amount_usd END AS agency_travel_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN 'Booked via travel agency' ELSE 'Expensed by employees' END AS channel,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN 'Not itemised (expense claims)' ELSE category_group END AS spend_group,\n",
+            "  CASE\n",
+            "    WHEN source <> 'Travel agency' THEN NULL\n",
+            "    WHEN purpose_of_trip IS NULL THEN 'Not given'\n",
+            "    WHEN purpose_of_trip IN ('Client Meeting', 'Client Work', 'Site Visit') THEN 'Client'\n    WHEN purpose_of_trip = 'Internal Meeting' THEN 'Internal'\n    WHEN purpose_of_trip = 'Conference' THEN 'Conferences & events'\n    WHEN purpose_of_trip = 'New Business' THEN 'New business'\n    WHEN purpose_of_trip = 'Training' THEN 'Training'\n    ELSE 'Other'\n",
+            "  END AS trip_purpose,\n",
+            "  purpose_of_trip, payment_method, report_id, line_basis, department,\n",
+            "  cc_group_2 AS cc_group_2,\n",
+            "  cc_group_3 AS department_group,\n",
+            "  team, match_method\n",
+            "FROM {{schema}}.spend_unified) WHERE team NOT IN ('No team', 'Unmapped')\n"
+         ]
+      },
+      {
+         "displayName" : "Top 10 categories",
+         "name" : "top10",
+         "queryLines" : [
+            "SELECT b.* FROM (SELECT source, category_group, category, detail, employee_name, country, entity, spend_date, month,\n",
+            "  date_format(month, 'yyyy-MM') AS month_label, amount_usd,\n",
+            "  CASE WHEN source = 'Expense claims' THEN amount_usd END AS expense_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN amount_usd END AS agency_usd,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN amount_usd END AS not_itemised_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') THEN amount_usd END AS travel_usd,\n",
+            "  CASE WHEN category IN ('Air', 'Hotel', 'Rail') AND source = 'Travel agency' THEN amount_usd END AS agency_travel_usd,\n",
+            "  CASE WHEN source = 'Travel agency' THEN 'Booked via travel agency' ELSE 'Expensed by employees' END AS channel,\n",
+            "  CASE WHEN category_group = 'Not itemised' THEN 'Not itemised (expense claims)' ELSE category_group END AS spend_group,\n",
+            "  CASE\n",
+            "    WHEN source <> 'Travel agency' THEN NULL\n",
+            "    WHEN purpose_of_trip IS NULL THEN 'Not given'\n",
+            "    WHEN purpose_of_trip IN ('Client Meeting', 'Client Work', 'Site Visit') THEN 'Client'\n    WHEN purpose_of_trip = 'Internal Meeting' THEN 'Internal'\n    WHEN purpose_of_trip = 'Conference' THEN 'Conferences & events'\n    WHEN purpose_of_trip = 'New Business' THEN 'New business'\n    WHEN purpose_of_trip = 'Training' THEN 'Training'\n    ELSE 'Other'\n",
+            "  END AS trip_purpose,\n",
+            "  purpose_of_trip, payment_method, report_id, line_basis, department,\n",
+            "  cc_group_2 AS cc_group_2,\n",
+            "  cc_group_3 AS department_group,\n",
+            "  team, match_method\n",
+            "FROM {{schema}}.spend_unified) b JOIN (SELECT category FROM {{schema}}.spend_unified GROUP BY category ORDER BY SUM(amount_usd) DESC LIMIT 10) t ON b.category = t.category\n"
+         ]
+      },
+      {
+         "displayName" : "Top 50 employees (Jan–Oct, fixed)",
+         "name" : "top50",
+         "queryLines" : [
+            "SELECT ROW_NUMBER() OVER (ORDER BY SUM(amount_usd) DESC) AS rank, employee_name,\n",
+            "  max_by(cc_group_3, amount_usd) AS department_group,\n",
+            "  max_by(team, amount_usd) AS team,\n",
+            "  ROUND(SUM(CASE WHEN source = 'Travel agency' THEN amount_usd END), 2) AS agency_usd,\n",
+            "  ROUND(SUM(CASE WHEN source = 'Expense claims' THEN amount_usd END), 2) AS expense_usd,\n",
+            "  ROUND(SUM(amount_usd), 2) AS total_usd\n",
+            "FROM {{schema}}.spend_unified GROUP BY employee_name ORDER BY total_usd DESC LIMIT 50\n"
+         ]
+      },
+      {
+         "displayName" : "Load checks",
+         "name" : "checks",
+         "queryLines" : [
+            "SELECT check, value AS usd, run_at FROM {{schema}}.load_checks\n"
+         ]
+      },
+      {
+         "displayName" : "Travel agency adjustments",
+         "name" : "adjustments",
+         "queryLines" : [
+            "SELECT category, action, traveler, invoice_date, detail, country, original_amount, corrected_amount, amount_kept_usd FROM {{schema}}.agency_adjustments ORDER BY original_amount DESC\n"
+         ]
+      },
+      {
+         "displayName" : "People missing from staff mapping",
+         "name" : "people_gaps",
+         "queryLines" : [
+            "SELECT employee_name,\n",
+            "  concat_ws(' + ', sort_array(collect_set(source))) AS sources,\n",
+            "  max(CASE WHEN department = 'Unmapped' THEN 'No department' END) AS department_gap,\n",
+            "  max(CASE WHEN team = 'Unmapped' THEN 'No team' END) AS team_gap,\n",
+            "  count(*) AS lines, round(sum(amount_usd), 2) AS usd\n",
+            "FROM {{schema}}.spend_unified\n",
+            "WHERE department = 'Unmapped' OR team = 'Unmapped'\n",
+            "GROUP BY employee_name ORDER BY usd DESC\n"
+         ]
+      },
+      {
+         "displayName" : "Monthly totals",
+         "name" : "monthly",
+         "queryLines" : [
+            "SELECT month, SUM(amount_usd) AS month_usd FROM {{schema}}.spend_unified GROUP BY month"
+         ]
+      }
+   ],
+   "pages" : [
+      {
+         "displayName" : "Executive summary",
+         "layout" : [
+            {
+               "position" : {
+                  "height" : 2,
+                  "width" : 12,
+                  "x" : 0,
+                  "y" : 0
+               },
+               "widget" : {
+                  "multilineTextboxSpec" : {
+                     "lines" : [
+                        "# Travel & Expense â 2026 year to date\n",
+                        "**JanâOct 2026 Â· USD Â· travel agency bookings + approved expense claims Â· all data is fake** Â· Filters at the top apply to every chart Â· Method and data quality on the *Data checks* tab\n"
+                     ]
+                  },
+                  "name" : "header"
+               }
+            },
+            {
+               "position" : {
+                  "height" : 3,
+                  "width" : 3,
+                  "x" : 0,
+                  "y" : 2
+               },
+               "widget" : {
+                  "name" : "kpi_total",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "v"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "value" : {
+                           "fieldName" : "v",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 1,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : "Jan–Oct 2026, Travel agency + Expense claims",
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Total spend"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "counter"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 3,
+                  "width" : 3,
+                  "x" : 3,
+                  "y" : 2
+               },
+               "widget" : {
+                  "name" : "kpi_agency",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "SUM(`agency_usd`)",
+                                 "name" : "v"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "value" : {
+                           "fieldName" : "v",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 1,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : "Air, hotel and rail booked through Travel agency",
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Travel agency travel bookings"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "counter"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 3,
+                  "width" : 3,
+                  "x" : 6,
+                  "y" : 2
+               },
+               "widget" : {
+                  "name" : "kpi_expenses",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "SUM(`expense_usd`)",
+                                 "name" : "v"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "value" : {
+                           "fieldName" : "v",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 1,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : "Approved employee expense claims",
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Expense claims expenses"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "counter"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 3,
+                  "width" : 3,
+                  "x" : 9,
+                  "y" : 2
+               },
+               "widget" : {
+                  "name" : "kpi_month",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "monthly",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "AVG(`month_usd`)",
+                                 "name" : "avg(month_usd)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "data" : {
+                        "queryName" : "main_query"
+                     },
+                     "encodings" : {
+                        "value" : {
+                           "fieldName" : "avg(month_usd)",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 1,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : {
+                           "fields" : [],
+                           "value" : "Average monthly total for the months selected (follows the Month filter)"
+                        },
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Average per month"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "counter"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 8,
+                  "width" : 7,
+                  "x" : 0,
+                  "y" : 5
+               },
+               "widget" : {
+                  "name" : "by_month",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`source`",
+                                 "name" : "source"
+                              },
+                              {
+                                 "expression" : "`month_label`",
+                                 "name" : "month_label"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "color" : {
+                           "displayName" : "Source",
+                           "fieldName" : "source",
+                           "scale" : {
+                              "mappings" : [
+                                 {
+                                    "color" : "#1f3a5f",
+                                    "value" : "Travel agency"
+                                 },
+                                 {
+                                    "color" : "#e8833a",
+                                    "value" : "Expense claims"
+                                 }
+                              ],
+                              "type" : "categorical"
+                           }
+                        },
+                        "label" : {
+                           "show" : true,
+                           "showTotal" : true
+                        },
+                        "x" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Month",
+                           "fieldName" : "month_label",
+                           "scale" : {
+                              "sort" : {
+                                 "by" : "natural-order"
+                              },
+                              "type" : "categorical"
+                           }
+                        },
+                        "y" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Spend",
+                           "fieldName" : "sum(amount_usd)",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 0,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           },
+                           "scale" : {
+                              "type" : "quantitative"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : "Travel agency by invoice date, Expense claims by report date",
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Monthly spend"
+                        }
+                     },
+                     "mark" : {
+                        "layout" : "stack"
+                     },
+                     "version" : 3,
+                     "widgetType" : "bar"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 8,
+                  "width" : 6,
+                  "x" : 0,
+                  "y" : 13
+               },
+               "widget" : {
+                  "name" : "tbl_team",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`team`",
+                                 "name" : "team"
+                              },
+                              {
+                                 "expression" : "COUNT(DISTINCT `employee_name`)",
+                                 "name" : "countdistinct(employee_name)"
+                              },
+                              {
+                                 "expression" : "SUM(`agency_usd`)",
+                                 "name" : "sum(agency_usd)"
+                              },
+                              {
+                                 "expression" : "SUM(`expense_usd`)",
+                                 "name" : "sum(expense_usd)"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ],
+                           "orders" : [
+                              {
+                                 "direction" : "DESC",
+                                 "expression" : "SUM(`amount_usd`)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "data" : {
+                        "queryName" : "main_query"
+                     },
+                     "encodings" : {
+                        "columns" : [
+                           {
+                              "displayName" : "Team",
+                              "fieldName" : "team"
+                           },
+                           {
+                              "displayName" : "People",
+                              "fieldName" : "countdistinct(employee_name)",
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Travel agency",
+                              "fieldName" : "sum(agency_usd)",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Expense claims",
+                              "fieldName" : "sum(expense_usd)",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Total",
+                              "fieldName" : "sum(amount_usd)",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           }
+                        ],
+                        "rowOrder" : [
+                           {
+                              "by" : "column-reversed",
+                              "field" : {
+                                 "index" : 4
+                              }
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "description" : {
+                           "fields" : [],
+                           "value" : "All spend, incl. No Team and people not yet in the staff mapping (Unmapped)"
+                        },
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Spend by team"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "table"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 8,
+                  "width" : 5,
+                  "x" : 7,
+                  "y" : 5
+               },
+               "widget" : {
+                  "name" : "by_top10",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "top10",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`category`",
+                                 "name" : "category"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "data" : {
+                        "queryName" : "main_query"
+                     },
+                     "encodings" : {
+                        "angle" : {
+                           "displayName" : "Spend",
+                           "fieldName" : "sum(amount_usd)",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 1,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           },
+                           "scale" : {
+                              "type" : "quantitative"
+                           }
+                        },
+                        "color" : {
+                           "displayName" : "Category",
+                           "fieldName" : "category",
+                           "scale" : {
+                              "mappings" : [
+                                 {
+                                    "color" : "#1f3a5f",
+                                    "value" : "Air"
+                                 },
+                                 {
+                                    "color" : "#2f6b4f",
+                                    "value" : "Hotel"
+                                 },
+                                 {
+                                    "color" : "#c9d3df",
+                                    "value" : "Not itemised in export"
+                                 },
+                                 {
+                                    "color" : "#e8833a",
+                                    "value" : "Taxi/Car Service"
+                                 },
+                                 {
+                                    "color" : "#4a6f99",
+                                    "value" : "Meals"
+                                 },
+                                 {
+                                    "color" : "#5f9c7f",
+                                    "value" : "Subscriptions"
+                                 },
+                                 {
+                                    "color" : "#f2ad78",
+                                    "value" : "Rail"
+                                 },
+                                 {
+                                    "color" : "#8fa9c7",
+                                    "value" : "Entertainment"
+                                 },
+                                 {
+                                    "color" : "#9cc8b0",
+                                    "value" : "Phone"
+                                 },
+                                 {
+                                    "color" : "#f7cfa8",
+                                    "value" : "Office"
+                                 }
+                              ],
+                              "sort" : {
+                                 "by" : "angle"
+                              },
+                              "type" : "categorical"
+                           }
+                        },
+                        "label" : {
+                           "show" : true
+                        }
+                     },
+                     "frame" : {
+                        "description" : {
+                           "fields" : [],
+                           "value" : "Top 10 categories Jan–Oct 2026 – values follow the filters"
+                        },
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Spend by Categories"
+                        }
+                     },
+                     "version" : 3,
+                     "widgetType" : "pie"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 8,
+                  "width" : 6,
+                  "x" : 0,
+                  "y" : 21
+               },
+               "widget" : {
+                  "name" : "by_channel",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "travel",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`channel`",
+                                 "name" : "channel"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "data" : {
+                        "queryName" : "main_query"
+                     },
+                     "encodings" : {
+                        "angle" : {
+                           "displayName" : "Spend",
+                           "fieldName" : "sum(amount_usd)",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 1,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           },
+                           "scale" : {
+                              "type" : "quantitative"
+                           }
+                        },
+                        "color" : {
+                           "displayName" : "Channel",
+                           "fieldName" : "channel",
+                           "scale" : {
+                              "mappings" : [
+                                 {
+                                    "color" : "#1f3a5f",
+                                    "value" : "Booked via travel agency"
+                                 },
+                                 {
+                                    "color" : "#e8833a",
+                                    "value" : "Expensed by employees"
+                                 }
+                              ],
+                              "sort" : {
+                                 "by" : "angle"
+                              },
+                              "type" : "categorical"
+                           }
+                        },
+                        "label" : {
+                           "show" : true
+                        }
+                     },
+                     "frame" : {
+                        "description" : {
+                           "fields" : [],
+                           "value" : "Share of air, hotel and rail spend – booked via Travel agency vs paid personally and claimed in Expense claims"
+                        },
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Travel booked through Travel agency vs expensed"
+                        }
+                     },
+                     "version" : 3,
+                     "widgetType" : "pie"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 8,
+                  "width" : 6,
+                  "x" : 6,
+                  "y" : 21
+               },
+               "widget" : {
+                  "name" : "by_purpose",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "purpose",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`trip_purpose`",
+                                 "name" : "trip_purpose"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "label" : {
+                           "show" : true
+                        },
+                        "x" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Spend",
+                           "fieldName" : "sum(amount_usd)",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 0,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           },
+                           "scale" : {
+                              "type" : "quantitative"
+                           }
+                        },
+                        "y" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Purpose",
+                           "fieldName" : "trip_purpose",
+                           "scale" : {
+                              "sort" : {
+                                 "by" : "x"
+                              },
+                              "type" : "categorical"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : {
+                           "fields" : [],
+                           "value" : "Travel agency bookings by purpose recorded at booking"
+                        },
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Purpose of Trip"
+                        }
+                     },
+                     "mark" : {
+                        "colors" : [
+                           "#2f6b4f"
+                        ]
+                     },
+                     "version" : 3,
+                     "widgetType" : "bar"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 11,
+                  "width" : 12,
+                  "x" : 0,
+                  "y" : 29
+               },
+               "widget" : {
+                  "name" : "tbl_top50",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "top50",
+                           "disaggregated" : true,
+                           "fields" : [
+                              {
+                                 "expression" : "`rank`",
+                                 "name" : "rank"
+                              },
+                              {
+                                 "expression" : "`employee_name`",
+                                 "name" : "employee_name"
+                              },
+                              {
+                                 "expression" : "`department_group`",
+                                 "name" : "department_group"
+                              },
+                              {
+                                 "expression" : "`team`",
+                                 "name" : "team"
+                              },
+                              {
+                                 "expression" : "`agency_usd`",
+                                 "name" : "agency_usd"
+                              },
+                              {
+                                 "expression" : "`expense_usd`",
+                                 "name" : "expense_usd"
+                              },
+                              {
+                                 "expression" : "`total_usd`",
+                                 "name" : "total_usd"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "columns" : [
+                           {
+                              "displayName" : "#",
+                              "fieldName" : "rank"
+                           },
+                           {
+                              "displayName" : "Employee",
+                              "fieldName" : "employee_name"
+                           },
+                           {
+                              "displayName" : "Department",
+                              "fieldName" : "department_group"
+                           },
+                           {
+                              "displayName" : "Team",
+                              "fieldName" : "team"
+                           },
+                           {
+                              "displayName" : "Travel agency",
+                              "fieldName" : "agency_usd",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Expense claims",
+                              "fieldName" : "expense_usd",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Total",
+                              "fieldName" : "total_usd",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Top 50 employees by spend – Jan–Oct 2026, highest to lowest (fixed list, not changed by the filters)"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "table"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 8,
+                  "width" : 6,
+                  "x" : 6,
+                  "y" : 13
+               },
+               "widget" : {
+                  "name" : "by_department",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`department_chart`",
+                                 "name" : "department_chart"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "label" : {
+                           "show" : true
+                        },
+                        "x" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Department",
+                           "fieldName" : "department_chart",
+                           "scale" : {
+                              "sort" : {
+                                 "by" : "y-reversed"
+                              },
+                              "type" : "categorical"
+                           }
+                        },
+                        "y" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Spend",
+                           "fieldName" : "sum(amount_usd)",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 0,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           },
+                           "scale" : {
+                              "type" : "quantitative"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : {
+                           "fields" : [],
+                           "value" : "Top 10 departments (CC Group 3 of the cost center charged); the rest grouped as Other"
+                        },
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Spend by department"
+                        }
+                     },
+                     "mark" : {
+                        "colors" : [
+                           "#1f3a5f"
+                        ]
+                     },
+                     "version" : 3,
+                     "widgetType" : "bar"
+                  }
+               }
+            }
+         ],
+         "layoutVersion" : "GRID_V1",
+         "name" : "overview",
+         "pageType" : "PAGE_TYPE_CANVAS"
+      },
+      {
+         "displayName" : "Teams & people",
+         "layout" : [
+            {
+               "position" : {
+                  "height" : 1,
+                  "width" : 12,
+                  "x" : 0,
+                  "y" : 0
+               },
+               "widget" : {
+                  "multilineTextboxSpec" : {
+                     "lines" : [
+                        "### Who is spending â by department, team, country and person\n"
+                     ]
+                  },
+                  "name" : "people_header"
+               }
+            },
+            {
+               "position" : {
+                  "height" : 9,
+                  "width" : 6,
+                  "x" : 0,
+                  "y" : 1
+               },
+               "widget" : {
+                  "name" : "by_team",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "teams",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`team`",
+                                 "name" : "team"
+                              },
+                              {
+                                 "expression" : "`source`",
+                                 "name" : "source"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "color" : {
+                           "displayName" : "Source",
+                           "fieldName" : "source",
+                           "scale" : {
+                              "mappings" : [
+                                 {
+                                    "color" : "#1f3a5f",
+                                    "value" : "Travel agency"
+                                 },
+                                 {
+                                    "color" : "#e8833a",
+                                    "value" : "Expense claims"
+                                 }
+                              ],
+                              "type" : "categorical"
+                           }
+                        },
+                        "label" : {
+                           "show" : true,
+                           "showTotal" : true
+                        },
+                        "x" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Team",
+                           "fieldName" : "team",
+                           "scale" : {
+                              "sort" : {
+                                 "by" : "y-reversed"
+                              },
+                              "type" : "categorical"
+                           }
+                        },
+                        "y" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Spend",
+                           "fieldName" : "sum(amount_usd)",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 0,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           },
+                           "scale" : {
+                              "type" : "quantitative"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : "Team teams only – No Team and unmapped people are excluded",
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Spend by client team"
+                        }
+                     },
+                     "mark" : {
+                        "layout" : "stack"
+                     },
+                     "version" : 3,
+                     "widgetType" : "bar"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 8,
+                  "width" : 12,
+                  "x" : 0,
+                  "y" : 10
+               },
+               "widget" : {
+                  "name" : "by_country",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`country`",
+                                 "name" : "country"
+                              },
+                              {
+                                 "expression" : "`source`",
+                                 "name" : "source"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "color" : {
+                           "displayName" : "Source",
+                           "fieldName" : "source",
+                           "scale" : {
+                              "mappings" : [
+                                 {
+                                    "color" : "#1f3a5f",
+                                    "value" : "Travel agency"
+                                 },
+                                 {
+                                    "color" : "#e8833a",
+                                    "value" : "Expense claims"
+                                 }
+                              ],
+                              "type" : "categorical"
+                           }
+                        },
+                        "x" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Spend",
+                           "fieldName" : "sum(amount_usd)",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 0,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           },
+                           "scale" : {
+                              "type" : "quantitative"
+                           }
+                        },
+                        "y" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Country",
+                           "fieldName" : "country",
+                           "scale" : {
+                              "sort" : {
+                                 "by" : "x"
+                              },
+                              "type" : "categorical"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : "Travel agency = travel destination, Expense claims = employee’s entity",
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Spend by country"
+                        }
+                     },
+                     "mark" : {
+                        "layout" : "stack"
+                     },
+                     "version" : 3,
+                     "widgetType" : "bar"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 9,
+                  "width" : 6,
+                  "x" : 6,
+                  "y" : 1
+               },
+               "widget" : {
+                  "name" : "tbl_department",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`cc_group_2`",
+                                 "name" : "cc_group_2"
+                              },
+                              {
+                                 "expression" : "`department_group`",
+                                 "name" : "department_group"
+                              },
+                              {
+                                 "expression" : "COUNT(DISTINCT `employee_name`)",
+                                 "name" : "people"
+                              },
+                              {
+                                 "expression" : "SUM(`agency_usd`)",
+                                 "name" : "sum(agency_usd)"
+                              },
+                              {
+                                 "expression" : "SUM(`expense_usd`)",
+                                 "name" : "sum(expense_usd)"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ],
+                           "orders" : [
+                              {
+                                 "direction" : "DESC",
+                                 "expression" : "SUM(`amount_usd`)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "columns" : [
+                           {
+                              "displayName" : "Function",
+                              "fieldName" : "cc_group_2"
+                           },
+                           {
+                              "displayName" : "Department",
+                              "fieldName" : "department_group"
+                           },
+                           {
+                              "displayName" : "People",
+                              "fieldName" : "people",
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Travel agency",
+                              "fieldName" : "sum(agency_usd)",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Expense claims",
+                              "fieldName" : "sum(expense_usd)",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Total",
+                              "fieldName" : "sum(amount_usd)",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           }
+                        ],
+                        "rowOrder" : [
+                           {
+                              "by" : "column-reversed",
+                              "field" : {
+                                 "index" : 5
+                              }
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "description" : "CC Group 2 / CC Group 3 of the cost center charged – click a header to sort",
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Spend by department"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "table"
+                  }
+               }
+            }
+         ],
+         "layoutVersion" : "GRID_V1",
+         "name" : "teams",
+         "pageType" : "PAGE_TYPE_CANVAS"
+      },
+      {
+         "displayName" : "Data checks",
+         "layout" : [
+            {
+               "position" : {
+                  "height" : 5,
+                  "width" : 12,
+                  "x" : 0,
+                  "y" : 0
+               },
+               "widget" : {
+                  "multilineTextboxSpec" : {
+                     "lines" : [
+                        "## How the numbers are built\n",
+                        "* **Travel agency** â newest *Travel agency bookings* file, visible Air / Hotel / Rail tabs (hidden tabs are old copies). Dated by **invoice date**; country = destination.\n",
+                        "  * **Duplicates removed** â the September extract repeats hotel stays under the hotel group name and the brand name, and repeats some air rows.\n",
+                        "  * **Currency corrected** â Tokyo hotel stays one October week were in yen in the USD column. Converted at 1/150 USD per yen.\n",
+                        "* **Expense claims** â approved reports, dated by **report date**; amount = report total in USD, so it ties to the expense system. The export holds one expense line per report: the line keeps its expense type, the rest of the report is *Not itemised in export*.\n",
+                        "* **Period** â calendar 2026 only (JanâOct). Rows dated before 2026 are left out and shown in the tie-out.\n",
+                        "* **People** â department from the cost center the expense was charged to; travellers borrow the cost center of their own expense claims. Team from the staff mapping by employee ID, else by name. People hired after the mapping was taken show as *Unmapped*.\n"
+                     ]
+                  },
+                  "name" : "checks_text"
+               }
+            },
+            {
+               "position" : {
+                  "height" : 7,
+                  "width" : 6,
+                  "x" : 0,
+                  "y" : 5
+               },
+               "widget" : {
+                  "name" : "checks_table",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "checks",
+                           "disaggregated" : true,
+                           "fields" : [
+                              {
+                                 "expression" : "`check`",
+                                 "name" : "check"
+                              },
+                              {
+                                 "expression" : "`usd`",
+                                 "name" : "usd"
+                              },
+                              {
+                                 "expression" : "`run_at`",
+                                 "name" : "run_at"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "columns" : [
+                           {
+                              "displayName" : "Check",
+                              "fieldName" : "check"
+                           },
+                           {
+                              "displayName" : "USD",
+                              "fieldName" : "usd",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Run at",
+                              "fieldName" : "run_at"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Tie-out of the last load"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "table"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 7,
+                  "width" : 6,
+                  "x" : 6,
+                  "y" : 5
+               },
+               "widget" : {
+                  "name" : "by_basis",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`line_basis`",
+                                 "name" : "line_basis"
+                              },
+                              {
+                                 "expression" : "`source`",
+                                 "name" : "source"
+                              },
+                              {
+                                 "expression" : "SUM(`amount_usd`)",
+                                 "name" : "sum(amount_usd)"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "color" : {
+                           "displayName" : "Source",
+                           "fieldName" : "source",
+                           "scale" : {
+                              "mappings" : [
+                                 {
+                                    "color" : "#1f3a5f",
+                                    "value" : "Travel agency"
+                                 },
+                                 {
+                                    "color" : "#e8833a",
+                                    "value" : "Expense claims"
+                                 }
+                              ],
+                              "type" : "categorical"
+                           }
+                        },
+                        "label" : {
+                           "show" : true
+                        },
+                        "x" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Spend",
+                           "fieldName" : "sum(amount_usd)",
+                           "format" : {
+                              "abbreviation" : "compact",
+                              "currencyCode" : "USD",
+                              "decimalPlaces" : {
+                                 "places" : 0,
+                                 "type" : "max"
+                              },
+                              "type" : "number-currency"
+                           },
+                           "scale" : {
+                              "type" : "quantitative"
+                           }
+                        },
+                        "y" : {
+                           "axis" : {
+                              "hideTitle" : true
+                           },
+                           "displayName" : "Basis",
+                           "fieldName" : "line_basis",
+                           "scale" : {
+                              "sort" : {
+                                 "by" : "x"
+                              },
+                              "type" : "categorical"
+                           }
+                        }
+                     },
+                     "frame" : {
+                        "description" : "Expense claims partial = only one line of the report is in the export",
+                        "showDescription" : true,
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "How each amount was derived"
+                        }
+                     },
+                     "mark" : {
+                        "layout" : "stack"
+                     },
+                     "version" : 3,
+                     "widgetType" : "bar"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 8,
+                  "width" : 12,
+                  "x" : 0,
+                  "y" : 12
+               },
+               "widget" : {
+                  "name" : "adj_table",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "adjustments",
+                           "disaggregated" : true,
+                           "fields" : [
+                              {
+                                 "expression" : "`category`",
+                                 "name" : "category"
+                              },
+                              {
+                                 "expression" : "`action`",
+                                 "name" : "action"
+                              },
+                              {
+                                 "expression" : "`traveler`",
+                                 "name" : "traveler"
+                              },
+                              {
+                                 "expression" : "`invoice_date`",
+                                 "name" : "invoice_date"
+                              },
+                              {
+                                 "expression" : "`detail`",
+                                 "name" : "detail"
+                              },
+                              {
+                                 "expression" : "`country`",
+                                 "name" : "country"
+                              },
+                              {
+                                 "expression" : "`original_amount`",
+                                 "name" : "original_amount"
+                              },
+                              {
+                                 "expression" : "`corrected_amount`",
+                                 "name" : "corrected_amount"
+                              },
+                              {
+                                 "expression" : "`amount_kept_usd`",
+                                 "name" : "amount_kept_usd"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "columns" : [
+                           {
+                              "displayName" : "Type",
+                              "fieldName" : "category"
+                           },
+                           {
+                              "displayName" : "Action",
+                              "fieldName" : "action"
+                           },
+                           {
+                              "displayName" : "Traveler",
+                              "fieldName" : "traveler"
+                           },
+                           {
+                              "displayName" : "Invoice date",
+                              "fieldName" : "invoice_date"
+                           },
+                           {
+                              "displayName" : "Hotel / carrier",
+                              "fieldName" : "detail"
+                           },
+                           {
+                              "displayName" : "Country",
+                              "fieldName" : "country"
+                           },
+                           {
+                              "displayName" : "In file (USD col)",
+                              "fieldName" : "original_amount",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Corrected",
+                              "fieldName" : "corrected_amount",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           },
+                           {
+                              "displayName" : "Kept",
+                              "fieldName" : "amount_kept_usd",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Travel agency rows converted or removed"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "table"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 8,
+                  "width" : 12,
+                  "x" : 0,
+                  "y" : 20
+               },
+               "widget" : {
+                  "name" : "gaps_table",
+                  "queries" : [
+                     {
+                        "name" : "main_query",
+                        "query" : {
+                           "datasetName" : "people_gaps",
+                           "disaggregated" : true,
+                           "fields" : [
+                              {
+                                 "expression" : "`employee_name`",
+                                 "name" : "employee_name"
+                              },
+                              {
+                                 "expression" : "`sources`",
+                                 "name" : "sources"
+                              },
+                              {
+                                 "expression" : "`department_gap`",
+                                 "name" : "department_gap"
+                              },
+                              {
+                                 "expression" : "`team_gap`",
+                                 "name" : "team_gap"
+                              },
+                              {
+                                 "expression" : "`lines`",
+                                 "name" : "lines"
+                              },
+                              {
+                                 "expression" : "`usd`",
+                                 "name" : "usd"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "columns" : [
+                           {
+                              "displayName" : "Employee",
+                              "fieldName" : "employee_name"
+                           },
+                           {
+                              "displayName" : "Source",
+                              "fieldName" : "sources"
+                           },
+                           {
+                              "displayName" : "Department",
+                              "fieldName" : "department_gap"
+                           },
+                           {
+                              "displayName" : "Team",
+                              "fieldName" : "team_gap"
+                           },
+                           {
+                              "displayName" : "Lines",
+                              "fieldName" : "lines"
+                           },
+                           {
+                              "displayName" : "USD",
+                              "fieldName" : "usd",
+                              "format" : {
+                                 "abbreviation" : "compact",
+                                 "currencyCode" : "USD",
+                                 "decimalPlaces" : {
+                                    "places" : 1,
+                                    "type" : "max"
+                                 },
+                                 "type" : "number-currency"
+                              },
+                              "headerAlignment" : "right"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "People missing from the staff mapping file (no department and/or team)"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "table"
+                  }
+               }
+            }
+         ],
+         "layoutVersion" : "GRID_V1",
+         "name" : "data_checks",
+         "pageType" : "PAGE_TYPE_CANVAS"
+      },
+      {
+         "displayName" : "Global Filters",
+         "layout" : [
+            {
+               "position" : {
+                  "height" : 2,
+                  "width" : 2,
+                  "x" : 0,
+                  "y" : 0
+               },
+               "widget" : {
+                  "name" : "f_month",
+                  "queries" : [
+                     {
+                        "name" : "f_month_spend",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`month`",
+                                 "name" : "month"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "month_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_month_travel",
+                        "query" : {
+                           "datasetName" : "travel",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`month`",
+                                 "name" : "month"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "month_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_month_purpose",
+                        "query" : {
+                           "datasetName" : "purpose",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`month`",
+                                 "name" : "month"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "month_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_month_teams",
+                        "query" : {
+                           "datasetName" : "teams",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`month`",
+                                 "name" : "month"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "month_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_month_top10",
+                        "query" : {
+                           "datasetName" : "top10",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`month`",
+                                 "name" : "month"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "month_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_month_monthly",
+                        "query" : {
+                           "datasetName" : "monthly",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`month`",
+                                 "name" : "month"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "month_associativity"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "fields" : [
+                           {
+                              "fieldName" : "month",
+                              "queryName" : "f_month_spend"
+                           },
+                           {
+                              "fieldName" : "month",
+                              "queryName" : "f_month_travel"
+                           },
+                           {
+                              "fieldName" : "month",
+                              "queryName" : "f_month_purpose"
+                           },
+                           {
+                              "fieldName" : "month",
+                              "queryName" : "f_month_teams"
+                           },
+                           {
+                              "fieldName" : "month",
+                              "queryName" : "f_month_top10"
+                           },
+                           {
+                              "fieldName" : "month",
+                              "queryName" : "f_month_monthly"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Month"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "filter-date-range-picker"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 2,
+                  "width" : 2,
+                  "x" : 2,
+                  "y" : 0
+               },
+               "widget" : {
+                  "name" : "f_source",
+                  "queries" : [
+                     {
+                        "name" : "f_source_spend",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`source`",
+                                 "name" : "source"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "source_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_source_travel",
+                        "query" : {
+                           "datasetName" : "travel",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`source`",
+                                 "name" : "source"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "source_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_source_purpose",
+                        "query" : {
+                           "datasetName" : "purpose",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`source`",
+                                 "name" : "source"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "source_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_source_teams",
+                        "query" : {
+                           "datasetName" : "teams",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`source`",
+                                 "name" : "source"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "source_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_source_top10",
+                        "query" : {
+                           "datasetName" : "top10",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`source`",
+                                 "name" : "source"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "source_associativity"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "fields" : [
+                           {
+                              "fieldName" : "source",
+                              "queryName" : "f_source_spend"
+                           },
+                           {
+                              "fieldName" : "source",
+                              "queryName" : "f_source_travel"
+                           },
+                           {
+                              "fieldName" : "source",
+                              "queryName" : "f_source_purpose"
+                           },
+                           {
+                              "fieldName" : "source",
+                              "queryName" : "f_source_teams"
+                           },
+                           {
+                              "fieldName" : "source",
+                              "queryName" : "f_source_top10"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Source"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "filter-multi-select"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 2,
+                  "width" : 2,
+                  "x" : 4,
+                  "y" : 0
+               },
+               "widget" : {
+                  "name" : "f_category_group",
+                  "queries" : [
+                     {
+                        "name" : "f_category_group_spend",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`category_group`",
+                                 "name" : "category_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "category_group_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_category_group_travel",
+                        "query" : {
+                           "datasetName" : "travel",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`category_group`",
+                                 "name" : "category_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "category_group_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_category_group_purpose",
+                        "query" : {
+                           "datasetName" : "purpose",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`category_group`",
+                                 "name" : "category_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "category_group_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_category_group_teams",
+                        "query" : {
+                           "datasetName" : "teams",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`category_group`",
+                                 "name" : "category_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "category_group_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_category_group_top10",
+                        "query" : {
+                           "datasetName" : "top10",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`category_group`",
+                                 "name" : "category_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "category_group_associativity"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "fields" : [
+                           {
+                              "fieldName" : "category_group",
+                              "queryName" : "f_category_group_spend"
+                           },
+                           {
+                              "fieldName" : "category_group",
+                              "queryName" : "f_category_group_travel"
+                           },
+                           {
+                              "fieldName" : "category_group",
+                              "queryName" : "f_category_group_purpose"
+                           },
+                           {
+                              "fieldName" : "category_group",
+                              "queryName" : "f_category_group_teams"
+                           },
+                           {
+                              "fieldName" : "category_group",
+                              "queryName" : "f_category_group_top10"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Category group"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "filter-multi-select"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 2,
+                  "width" : 2,
+                  "x" : 6,
+                  "y" : 0
+               },
+               "widget" : {
+                  "name" : "f_department_group",
+                  "queries" : [
+                     {
+                        "name" : "f_department_group_spend",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`department_group`",
+                                 "name" : "department_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "department_group_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_department_group_travel",
+                        "query" : {
+                           "datasetName" : "travel",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`department_group`",
+                                 "name" : "department_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "department_group_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_department_group_purpose",
+                        "query" : {
+                           "datasetName" : "purpose",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`department_group`",
+                                 "name" : "department_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "department_group_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_department_group_teams",
+                        "query" : {
+                           "datasetName" : "teams",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`department_group`",
+                                 "name" : "department_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "department_group_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_department_group_top10",
+                        "query" : {
+                           "datasetName" : "top10",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`department_group`",
+                                 "name" : "department_group"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "department_group_associativity"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "fields" : [
+                           {
+                              "fieldName" : "department_group",
+                              "queryName" : "f_department_group_spend"
+                           },
+                           {
+                              "fieldName" : "department_group",
+                              "queryName" : "f_department_group_travel"
+                           },
+                           {
+                              "fieldName" : "department_group",
+                              "queryName" : "f_department_group_purpose"
+                           },
+                           {
+                              "fieldName" : "department_group",
+                              "queryName" : "f_department_group_teams"
+                           },
+                           {
+                              "fieldName" : "department_group",
+                              "queryName" : "f_department_group_top10"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Department"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "filter-multi-select"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 2,
+                  "width" : 2,
+                  "x" : 8,
+                  "y" : 0
+               },
+               "widget" : {
+                  "name" : "f_team",
+                  "queries" : [
+                     {
+                        "name" : "f_team_spend",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`team`",
+                                 "name" : "team"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "team_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_team_travel",
+                        "query" : {
+                           "datasetName" : "travel",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`team`",
+                                 "name" : "team"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "team_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_team_purpose",
+                        "query" : {
+                           "datasetName" : "purpose",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`team`",
+                                 "name" : "team"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "team_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_team_teams",
+                        "query" : {
+                           "datasetName" : "teams",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`team`",
+                                 "name" : "team"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "team_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_team_top10",
+                        "query" : {
+                           "datasetName" : "top10",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`team`",
+                                 "name" : "team"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "team_associativity"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "fields" : [
+                           {
+                              "fieldName" : "team",
+                              "queryName" : "f_team_spend"
+                           },
+                           {
+                              "fieldName" : "team",
+                              "queryName" : "f_team_travel"
+                           },
+                           {
+                              "fieldName" : "team",
+                              "queryName" : "f_team_purpose"
+                           },
+                           {
+                              "fieldName" : "team",
+                              "queryName" : "f_team_teams"
+                           },
+                           {
+                              "fieldName" : "team",
+                              "queryName" : "f_team_top10"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Team"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "filter-multi-select"
+                  }
+               }
+            },
+            {
+               "position" : {
+                  "height" : 2,
+                  "width" : 2,
+                  "x" : 10,
+                  "y" : 0
+               },
+               "widget" : {
+                  "name" : "f_country",
+                  "queries" : [
+                     {
+                        "name" : "f_country_spend",
+                        "query" : {
+                           "datasetName" : "spend",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`country`",
+                                 "name" : "country"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "country_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_country_travel",
+                        "query" : {
+                           "datasetName" : "travel",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`country`",
+                                 "name" : "country"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "country_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_country_purpose",
+                        "query" : {
+                           "datasetName" : "purpose",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`country`",
+                                 "name" : "country"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "country_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_country_teams",
+                        "query" : {
+                           "datasetName" : "teams",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`country`",
+                                 "name" : "country"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "country_associativity"
+                              }
+                           ]
+                        }
+                     },
+                     {
+                        "name" : "f_country_top10",
+                        "query" : {
+                           "datasetName" : "top10",
+                           "disaggregated" : false,
+                           "fields" : [
+                              {
+                                 "expression" : "`country`",
+                                 "name" : "country"
+                              },
+                              {
+                                 "expression" : "COUNT_IF(`associative_filter_predicate_group`)",
+                                 "name" : "country_associativity"
+                              }
+                           ]
+                        }
+                     }
+                  ],
+                  "spec" : {
+                     "encodings" : {
+                        "fields" : [
+                           {
+                              "fieldName" : "country",
+                              "queryName" : "f_country_spend"
+                           },
+                           {
+                              "fieldName" : "country",
+                              "queryName" : "f_country_travel"
+                           },
+                           {
+                              "fieldName" : "country",
+                              "queryName" : "f_country_purpose"
+                           },
+                           {
+                              "fieldName" : "country",
+                              "queryName" : "f_country_teams"
+                           },
+                           {
+                              "fieldName" : "country",
+                              "queryName" : "f_country_top10"
+                           }
+                        ]
+                     },
+                     "frame" : {
+                        "showTitle" : true,
+                        "title" : {
+                           "fields" : [],
+                           "value" : "Country"
+                        }
+                     },
+                     "version" : 2,
+                     "widgetType" : "filter-multi-select"
+                  }
+               }
+            }
+         ],
+         "layoutVersion" : "GRID_V1",
+         "name" : "global_filters",
+         "pageType" : "PAGE_TYPE_GLOBAL_FILTERS"
+      }
+   ]
+}
